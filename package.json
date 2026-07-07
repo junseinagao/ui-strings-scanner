@@ -1,0 +1,50 @@
+{
+  "name": "ui-strings",
+  "version": "0.1.0",
+  "description": "Extract user-reachable UI strings from React (TS/TSX) codebases and generate JSON / Markdown / HTML reports",
+  "type": "module",
+  "bin": {
+    "ui-strings": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "react",
+    "jsx",
+    "i18n",
+    "static-analysis",
+    "ts-morph",
+    "ui-strings",
+    "copy-audit",
+    "cli"
+  ],
+  "scripts": {
+    "build": "bun build src/cli.ts --outdir dist --target node --packages external",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "prepublishOnly": "bun run build && bun test"
+  },
+  "license": "MIT",
+  "author": "junseinagao",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/junseinagao/ui-strings-scanner.git"
+  },
+  "homepage": "https://github.com/junseinagao/ui-strings-scanner#readme",
+  "bugs": {
+    "url": "https://github.com/junseinagao/ui-strings-scanner/issues"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1",
+    "ts-morph": "^28.0.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14",
+    "typescript": "^6.0.3"
+  }
+}
