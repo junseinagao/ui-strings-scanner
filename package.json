@@ -1,6 +1,6 @@
 {
   "name": "ui-strings",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Extract user-reachable UI strings from React (TS/TSX) codebases and generate JSON / Markdown / HTML reports",
   "type": "module",
   "bin": {
