@@ -4,7 +4,7 @@
   "description": "Extract user-reachable UI strings from React (TS/TSX) codebases and generate JSON / Markdown / HTML reports",
   "type": "module",
   "bin": {
-    "ui-strings": "./dist/cli.js"
+    "ui-strings": "dist/cli.js"
   },
   "files": [
     "dist"
