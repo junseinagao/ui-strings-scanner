@@ -92,6 +92,15 @@ bun run typecheck
 bun run build   # bundle dist/cli.js
 ```
 
+To try a local build in another React project without publishing:
+
+```sh
+bun run build
+npm link
+# In another React project
+ui-strings scan
+```
+
 ## Contributing
 
 Issues and pull requests are welcome.
