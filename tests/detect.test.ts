@@ -54,6 +54,14 @@ cases("isCopy: object-property / metadata", [
   // Unknown keys fall back to the lexical check
   ["Total due", { kind: "object-property", key: "amount" }, true],
   ["USD_TOTAL", { kind: "object-property", key: "amount" }, false],
+  // dangerouslySetInnerHTML script bodies are code, not copy
+  [
+    "(function() { // Forward Cmd/Ctrl + K to parent\n document.addEventListener('keydown', handler); })()",
+    { kind: "object-property", key: "__html" },
+    false,
+  ],
+  // ...but Japanese markup injected via __html is still user-visible copy
+  ["<b>会員限定</b>", { kind: "object-property", key: "__html" }, true],
 ]);
 
 cases("isCopy: call-argument", [

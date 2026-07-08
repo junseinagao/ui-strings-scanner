@@ -47,6 +47,9 @@ const INLINE_TAGS = new Set([
 ]);
 const BREAK_TAGS = new Set(["br", "wbr"]);
 
+/** Raw-text elements whose children are code, not copy (inline scripts, styled-jsx CSS) */
+const RAW_TEXT_TAGS = new Set(["script", "style"]);
+
 const INTERACTIVE_KEY_PATTERN = /^(message|error|success|warning|status)|(message|error)$/i;
 const INTERACTIVE_FILE_PATTERN = /(^|\/)(actions|route)\.tsx?$/;
 
@@ -626,6 +629,14 @@ export const scanProject = (options: ScanOptions): ScanResult => {
       // Join direct children into one sentence per mergeable contiguous span.
       // Separators (components, block elements, copy-bearing expressions) are not consumed; the ongoing traversal applies the same processing to them recursively
       if (Node.isJsxElement(node) || Node.isJsxFragment(node)) {
+        const tag = tagNameOf(node);
+        if (tag !== undefined && RAW_TEXT_TAGS.has(tag)) {
+          // Always return void; a return value would stop the traversal
+          node.forEachDescendant((descendant) => {
+            consumed.add(nodeKey(descendant));
+          });
+          return;
+        }
         const runs = mergeRuns(node, detector.hasCopyText);
         const coversAll =
           runs.length === 1 &&

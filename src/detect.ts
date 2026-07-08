@@ -86,6 +86,8 @@ const TECHNICAL_KEYS = new Set([
   "locale",
   "format",
   "testId",
+  // dangerouslySetInnerHTML payloads are code/markup; the non-Latin early return still surfaces Japanese copy inside them
+  "__html",
 ]);
 
 /** Class-name utility callees (their arguments are never copy) */

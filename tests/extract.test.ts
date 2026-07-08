@@ -173,6 +173,52 @@ describe("scanProject: app-router fixture", () => {
   });
 });
 
+describe("scanProject: raw-text elements and __html payloads", () => {
+  let dir: string;
+  let result: ScanResult;
+
+  beforeAll(() => {
+    dir = makeFixtureProject({
+      "src/inline.tsx": `export const Analytics = () => (
+  <div>
+    <script
+      dangerouslySetInnerHTML={{
+        __html: \`(function() {
+  // Forward Cmd/Ctrl + K to parent
+  document.addEventListener("keydown", forwardToParent);
+})();\`,
+      }}
+    />
+    <div dangerouslySetInnerHTML={{ __html: "<p>Trusted english markup</p>" }} />
+    <style>{\`.button { color: red; }\`}</style>
+    <p>Visible copy stays</p>
+  </div>
+);
+`,
+    });
+    result = scanProject({ projectDir: dir, srcGlob: "src/**/*.{ts,tsx,js,jsx}" });
+  });
+  afterAll(() => removeFixtureProject(dir));
+
+  test("script bodies and __html payloads are excluded", () => {
+    const texts = result.entries.map((e) => e.text);
+    expect(texts.some((t) => t.includes("keydown"))).toBe(false);
+    expect(texts.some((t) => t.includes("Trusted english markup"))).toBe(false);
+  });
+
+  test("styled-jsx style CSS children are excluded", () => {
+    const texts = result.entries.map((e) => e.text);
+    expect(texts.some((t) => t.includes(".button"))).toBe(false);
+  });
+
+  test("regular copy in the same tree is still extracted", () => {
+    expect(result.entries.find((e) => e.text === "Visible copy stays")).toMatchObject({
+      kind: "jsx-text",
+      tag: "p",
+    });
+  });
+});
+
 describe("scanProject: plain fixture without tsconfig", () => {
   let dir: string;
   let result: ScanResult;
