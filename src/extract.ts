@@ -484,24 +484,44 @@ const surfaceFor = (classified: Classified, file: string): Surface => {
   return "visible";
 };
 
-/** Normalize Next.js App Router paths into routes; group everything else by directory */
-const groupFor = (relativeFile: string, hasAppDir: boolean): string => {
-  const parts = relativeFile.split(sep);
-  const appIndex = parts.indexOf("app");
-  if (hasAppDir && parts[0] === "src" && appIndex === 1) {
-    const segments = parts
-      .slice(2, -1)
+/**
+ * Number of leading directory segments shared by every scanned file (monorepo prefixes like `apps/v4` add no grouping signal).
+ * Stops before `src`/`app` so router detection keeps working even when only the app dir is scanned.
+ */
+const sharedPrefixLength = (files: string[][]): number => {
+  const first = files[0];
+  if (first === undefined) {
+    return 0;
+  }
+  let shared = first.length - 1;
+  for (const parts of files) {
+    const limit = Math.min(shared, parts.length - 1);
+    let i = 0;
+    while (i < limit && parts[i] === first[i]) {
+      i += 1;
+    }
+    shared = i;
+  }
+  const boundary = first
+    .slice(0, shared)
+    .findIndex((segment) => segment === "src" || segment === "app");
+  return boundary === -1 ? shared : boundary;
+};
+
+/** Normalize App Router paths into routes (depth ≤ 2 keeps the filter list manageable); group everything else by directory */
+const groupFor = (parts: string[], hasAppDir: boolean): string => {
+  const rest = parts[0] === "src" ? parts.slice(1) : parts;
+  if (hasAppDir && rest[0] === "app") {
+    const segments = rest
+      .slice(1, -1)
       .filter(
         (segment) =>
           segment !== "_dependencies" &&
           !(segment.startsWith("(") && segment.endsWith(")")),
       );
-    return `/${segments.join("/")}`;
+    return `/${segments.slice(0, 2).join("/")}`;
   }
-  const dirs = parts.slice(0, -1);
-  if (dirs[0] === "src") {
-    dirs.shift();
-  }
+  const dirs = rest.slice(0, -1);
   return dirs.slice(0, 2).join("/") || "(root)";
 };
 
@@ -538,9 +558,15 @@ export const scanProject = (options: ScanOptions): ScanResult => {
     `${projectDir}/${srcGlob}`,
     ...excludes.map((glob) => `!${projectDir}/${glob}`),
   ]);
-  const hasAppDir = sourceFiles.some((file) =>
-    relative(projectDir, file.getFilePath()).startsWith(`src${sep}app${sep}`),
+  const relativeParts = sourceFiles.map((file) =>
+    relative(projectDir, file.getFilePath()).split(sep),
   );
+  const prefixLength = sharedPrefixLength(relativeParts);
+  const hasAppDir = relativeParts.some((parts) => {
+    const stripped = parts.slice(prefixLength);
+    const rest = stripped[0] === "src" ? stripped.slice(1) : stripped;
+    return rest[0] === "app" && rest.length > 1;
+  });
 
   // Pre-pass: symbol-resolve identifiers rendered in JSX expressions and link them per declaration.
   // Follows import chains and paths aliases rather than matching by name, so same-named variables never get mislinked
@@ -580,7 +606,10 @@ export const scanProject = (options: ScanOptions): ScanResult => {
   const entries: StringEntry[] = [];
   for (const sourceFile of sourceFiles) {
     const relativeFile = relative(projectDir, sourceFile.getFilePath());
-    const group = groupFor(relativeFile, hasAppDir);
+    const group = groupFor(
+      relativeFile.split(sep).slice(prefixLength),
+      hasAppDir,
+    );
     // Track consumed nodes by position keys, avoiding reliance on wrapper identity
     const consumed = new Set<string>();
     const nodeKey = (node: Node): string =>

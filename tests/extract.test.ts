@@ -219,6 +219,44 @@ describe("scanProject: raw-text elements and __html payloads", () => {
   });
 });
 
+describe("scanProject: monorepo prefix is stripped from groups", () => {
+  let dir: string;
+  let result: ScanResult;
+  const groupOf = (text: string): string | undefined =>
+    result.entries.find((e) => e.text === text)?.group;
+
+  beforeAll(() => {
+    dir = makeFixtureProject({
+      "apps/web/app/dashboard/page.tsx": `export default function Dashboard() { return <h1>Dashboard overview</h1>; }
+`,
+      "apps/web/app/(auth)/login/page.tsx": `export default function Login() { return <h1>Sign in to continue</h1>; }
+`,
+      "apps/web/app/settings/profile/details/page.tsx": `export default function Details() { return <h1>Profile details heading</h1>; }
+`,
+      "apps/web/components/nav.tsx": `export const Nav = () => <p>Shared nav copy</p>;
+`,
+    });
+    result = scanProject({
+      projectDir: dir,
+      srcGlob: "apps/web/**/*.{ts,tsx,js,jsx}",
+    });
+  });
+  afterAll(() => removeFixtureProject(dir));
+
+  test("app dir without src/ is detected as App Router routes", () => {
+    expect(groupOf("Dashboard overview")).toBe("/dashboard");
+    expect(groupOf("Sign in to continue")).toBe("/login");
+  });
+
+  test("route depth is capped at two segments", () => {
+    expect(groupOf("Profile details heading")).toBe("/settings/profile");
+  });
+
+  test("non-app dirs group by directory after the shared prefix", () => {
+    expect(groupOf("Shared nav copy")).toBe("components");
+  });
+});
+
 describe("scanProject: plain fixture without tsconfig", () => {
   let dir: string;
   let result: ScanResult;
