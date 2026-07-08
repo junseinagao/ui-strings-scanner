@@ -15,13 +15,13 @@
 
 # UI Strings Scanner
 
-UI Strings Scanner lists every string that could reach the user in a React (JSX/TSX) codebase, without running the code. It parses the AST with [ts-morph](https://ts-morph.com/), so it works on any React project with one command: no build, no mocks, no runtime. Detection is built on JSX semantics, so it is React-only.
+UI Strings Scanner lists every string that could reach the user in a React (JSX/TSX) codebase. It parses the AST with [ts-morph](https://ts-morph.com/) instead of running the code, so one command covers any React project without a build step or a dev server. Detection relies on JSX semantics, so the scanner is React-only.
 
-Use it to audit hardcoded copy, review tone and wording, catch untranslated strings, or take stock before adopting i18n. It inventories strings; translation-key management is out of scope.
+Use it to audit hardcoded copy, review tone and wording, catch untranslated strings, or take stock before adopting i18n. The scanner inventories strings and leaves translation-key management to your i18n tooling.
 
 <img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-page-view.png" alt="HTML report: every UI string grouped by route, with search, surface filters, and stats" />
 
-<p align="center"><i>The HTML report for <a href="https://github.com/shadcn-ui/ui">shadcn/ui</a> — 27,000+ strings from 3,550 files, grouped by route and laid out like the page.</i></p>
+<p align="center"><i>The HTML report for <a href="https://github.com/shadcn-ui/ui">shadcn/ui</a>: 27,000+ strings from 3,550 files, grouped by route and laid out like the page.</i></p>
 
 ## Quick Start
 
@@ -46,19 +46,17 @@ Scanning: /path/to/my-app/src/**/*.{ts,tsx,js,jsx}
 → /path/to/my-app/ui-strings-report/ui-strings.html
 ```
 
-New here? The [Getting Started guide](GETTING_STARTED.md) walks through the report and the review workflow step by step.
-
 ## Review copy, then fix it with your AI agent
 
-The HTML report is a review tool, not just a listing. Spot a string that needs work, click ✎, and type the new copy — the report shows old → new and keeps your edits across reloads.
+The HTML report doubles as a copy-review tool. Spot a string that needs work, click ✎, and type the new copy. The report shows old → new and keeps your edits across reloads.
 
 <img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-inline-edit.png" alt="Inline editing in the report: the old string is struck through, the replacement shown next to it, with an edits bar at the bottom" />
 
-When you're done reviewing, **Copy fix prompt** turns every edit into a single prompt with exact `file:line` locations — ready to paste into Claude Code, Cursor, Codex, or any AI coding agent. The agent changes exactly the right literals; no grep guessing, no manual diffs.
+Once your pass is done, **Copy fix prompt** turns every edit into one prompt with `file:line` locations. Paste it into Claude Code, Cursor, Codex, or any coding agent, and the agent rewrites the exact literals you marked.
 
 <img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-fix-prompt.png" alt="Fix Prompt modal: a generated prompt listing each edit as file path, line number, current text, and replacement text" />
 
-Prefer a spreadsheet-style pass? Switch to **Table view** for surface, kind, context, and location columns — rows copy out as TSV.
+**Table view** shows one row per string with surface, kind, context, and location columns. Rows copy out as TSV for spreadsheet work.
 
 <img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-table-view.png" alt="Table view: one row per string with surface, kind, context, and file:line location columns" />
 
@@ -67,9 +65,9 @@ Prefer a spreadsheet-style pass? Switch to **Table view** for surface, kind, con
 - **Sentence-level extraction** - `<p>Hello <b>world</b>,<br />welcome</p>` comes out as one string. Embedded expressions become `{count}` placeholders.
 - **Condition tracking** - Strings inside `cond ? A : B` or `cond && X` carry their condition, so you know when they show.
 - **Symbol resolution** - An option array rendered with `.map()` links back to its declaration, across import chains and `@/` aliases.
-- **Surface classification** - Every string is tagged by how it reaches the user: `visible`, `interactive`, `a11y`, `meta`, or `internal`.
-- **Noise filtering** - Class names, import paths, and directives never make the list. Structural rules combine with lexical shape, and non-Latin text always counts as copy, so mixed-language projects work.
-- **Next.js aware** - Entries group by App Router route, and `metadata` is classified as `meta`.
+- **Surface classification** - Every string carries a tag for how it reaches the user: `visible` (rendered as-is), `interactive` (toasts, validation, API messages), `a11y` (`aria-*`, `alt`, `title`), `meta` (Next.js metadata), or `internal` (console/throw).
+- **Noise filtering** - Class names, import paths, and directives never make the list. Detection combines a string's position (attribute, object key, call argument) with its shape, and treats non-Latin text as copy in any position, so mixed-language projects work.
+- **Next.js aware** - Entries group by App Router route, and `metadata` lands under `meta`.
 - **Fix prompts** - Edit strings in the HTML viewer, then copy all edits as a ready-to-run prompt for an AI coding agent.
 
 ## Usage
@@ -99,7 +97,7 @@ The scanner reads the target project's `tsconfig.json` when present and resolves
 
 ## Limitations
 
-Static analysis has limits. Strings built at runtime, such as API responses and computed values, stay invisible. Copy passed across components is captured at its declaration, and only the array `.map()` pattern resolves to a render site. Unknown copy attributes fall back to lexical detection.
+Strings built at runtime, such as API responses and computed values, stay invisible to static analysis. The scanner records copy passed across components at its declaration and resolves render sites only for the array `.map()` pattern. Unknown copy attributes fall back to lexical detection.
 
 ## Development
 
