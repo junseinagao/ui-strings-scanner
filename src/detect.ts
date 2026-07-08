@@ -109,6 +109,23 @@ const HEX_COLOR = /^#[0-9a-fA-F]{3,8}$/;
 const IDENTIFIER_TOKEN = /^[A-Za-z0-9]+([-_][A-Za-z0-9\[\]%./:#]+)+$/;
 const CONSTANT_TOKEN = /^[A-Z0-9_]+$/;
 
+/** Line shapes that occur in source code but almost never in copy (lowercase keywords, brace/semicolon endings) */
+const CODE_LINE =
+  /^(import|export|const|let|var|function|return|type|interface|if|for|while|switch)\b|^["']use (client|server)["']|[{};]$|^[})\]]|=>/;
+
+/** Multi-line strings that are source code, not copy (registry `content` payloads, embedded snippets) */
+const looksLikeCode = (text: string): boolean => {
+  const lines = text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "");
+  if (lines.length < 3) {
+    return false;
+  }
+  const codeLines = lines.filter((line) => CODE_LINE.test(line)).length;
+  return codeLines / lines.length >= 0.5;
+};
+
 /** Whether the text contains a letter outside the Latin range (Japanese, etc.); such text is always a copy candidate */
 const hasNonLatinLetter = (text: string): boolean => {
   for (const ch of text) {
@@ -175,6 +192,10 @@ const lexical = (text: string): boolean =>
 
 const isCopyEn = (text: string, context: CopyContext): boolean => {
   const { kind, attr, callee, key } = context;
+  // Checked before the non-Latin rule so embedded code is rejected even when its comments contain Japanese
+  if (looksLikeCode(text)) {
+    return false;
+  }
   // Non-Latin text (Japanese, etc.) is always treated as copy regardless of slot. Technical slots (className, etc.) practically never hold Japanese, and this keeps cases like value: "未読" (technical key + Japanese value) from being dropped.
   if (hasNonLatinLetter(text)) {
     return true;

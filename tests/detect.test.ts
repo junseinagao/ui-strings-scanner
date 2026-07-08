@@ -64,6 +64,29 @@ cases("isCopy: object-property / metadata", [
   ["<b>会員限定</b>", { kind: "object-property", key: "__html" }, true],
 ]);
 
+cases("isCopy: multi-line source code is never copy", [
+  // Registry `content` payloads embed whole component files as template literals
+  [
+    '"use client"\n\nimport * as React from "react"\n\nfunction ThemeProvider({ children }) {\n  return children\n}\n\nexport { ThemeProvider }',
+    { kind: "object-property", key: "content" },
+    false,
+  ],
+  // Japanese comments inside embedded code do not rescue it
+  [
+    'import { load } from "@/lib/config"\n// 設定を読み込む\nconst config = load()\nreturn config',
+    { kind: "object-property", key: "content" },
+    false,
+  ],
+  // Multi-line prose (e.g. merged across <br>) is still copy
+  [
+    "Something went wrong.\nPlease try again later.\nContact support if it persists.",
+    { kind: "jsx-text" },
+    true,
+  ],
+  // Short `content` values holding real copy are unaffected
+  ["This is the body of the announcement", { kind: "object-property", key: "content" }, true],
+]);
+
 cases("isCopy: call-argument", [
   ["Nice readable text", { kind: "call-argument", callee: "cn" }, false],
   ["px-2 py-1", { kind: "call-argument", callee: "clsx" }, false],
