@@ -3,3 +3,4 @@ dist/
 ui-strings-report/
 reports/
 .ai/
+.DS_Store

@@ -19,6 +19,10 @@ UI Strings Scanner lists every string that could reach the user in a React (JSX/
 
 Use it to audit hardcoded copy, review tone and wording, catch untranslated strings, or take stock before adopting i18n. It inventories strings; translation-key management is out of scope.
 
+<img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-page-view.png" alt="HTML report: every UI string grouped by route, with search, surface filters, and stats" />
+
+<p align="center"><i>The HTML report for <a href="https://github.com/shadcn-ui/ui">shadcn/ui</a> — 27,000+ strings from 3,550 files, grouped by route and laid out like the page.</i></p>
+
 ## Quick Start
 
 Run it at the root of your React project:
@@ -41,6 +45,22 @@ Scanning: /path/to/my-app/src/**/*.{ts,tsx,js,jsx}
 → /path/to/my-app/ui-strings-report/ui-strings.md
 → /path/to/my-app/ui-strings-report/ui-strings.html
 ```
+
+New here? The [Getting Started guide](GETTING_STARTED.md) walks through the report and the review workflow step by step.
+
+## Review copy, then fix it with your AI agent
+
+The HTML report is a review tool, not just a listing. Spot a string that needs work, click ✎, and type the new copy — the report shows old → new and keeps your edits across reloads.
+
+<img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-inline-edit.png" alt="Inline editing in the report: the old string is struck through, the replacement shown next to it, with an edits bar at the bottom" />
+
+When you're done reviewing, **Copy fix prompt** turns every edit into a single prompt with exact `file:line` locations — ready to paste into Claude Code, Cursor, Codex, or any AI coding agent. The agent changes exactly the right literals; no grep guessing, no manual diffs.
+
+<img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-fix-prompt.png" alt="Fix Prompt modal: a generated prompt listing each edit as file path, line number, current text, and replacement text" />
+
+Prefer a spreadsheet-style pass? Switch to **Table view** for surface, kind, context, and location columns — rows copy out as TSV.
+
+<img src="https://raw.githubusercontent.com/junseinagao/ui-strings-scanner/main/assets/report-table-view.png" alt="Table view: one row per string with surface, kind, context, and file:line location columns" />
 
 ## Features
 
